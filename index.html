@@ -1,0 +1,2167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DESIGN.MD / Generator — Forge un prompt Claude Design fort & personnel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────
+   DESIGN TOKENS
+   ───────────────────────────────────────── */
+:root {
+  /* Surfaces — dark warm, brutalist */
+  --bg: #0A0907;
+  --surface: #13110E;
+  --surface-2: #1A1612;
+  --surface-3: #211C16;
+  --border: #2A2620;
+  --border-strong: #3D372E;
+
+  /* Text */
+  --text: #F5F1E8;
+  --text-soft: #A8A294;
+  --text-muted: #6E6859;
+
+  /* Accent — warm terracotta (Claude-adjacent, brutalist saturation) */
+  --accent: #E8784A;
+  --accent-hot: #FF8C5A;
+  --accent-bg: #3D2118;
+  --accent-bg-soft: #2A1810;
+
+  /* Status */
+  --success: #7FB069;
+  --danger: #E85D5D;
+
+  /* Fonts */
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-ui: 'Geist', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+
+  /* Layout */
+  --container: 1400px;
+  --header-h: 64px;
+  --tab-h: 56px;
+}
+
+/* ─────────────────────────────────────────
+   RESET & BASE
+   ───────────────────────────────────────── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.6;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Grain overlay for warmth */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: screen;
+}
+
+/* ─────────────────────────────────────────
+   TYPOGRAPHY HELPERS
+   ───────────────────────────────────────── */
+.label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.serif {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.mono { font-family: var(--font-mono); }
+
+/* ─────────────────────────────────────────
+   HEADER
+   ───────────────────────────────────────── */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: var(--header-h);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+}
+
+.header-inner {
+  width: 100%;
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.brand-mono {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.brand-slash { color: var(--accent); font-family: var(--font-mono); font-weight: 600; }
+
+.brand-serif {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 19px;
+  color: var(--text);
+}
+
+.header-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+.header-meta .dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  margin: 0 8px;
+  vertical-align: middle;
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--accent);
+}
+
+/* ─────────────────────────────────────────
+   TABS
+   ───────────────────────────────────────── */
+.tabs {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  position: sticky;
+  top: var(--header-h);
+  z-index: 99;
+}
+
+.tabs-inner {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  gap: 0;
+  height: var(--tab-h);
+  align-items: stretch;
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border);
+  color: var(--text-soft);
+  padding: 0 28px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+
+.tab:first-child { border-left: 1px solid var(--border); }
+
+.tab .tab-num {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.tab:hover { color: var(--text); background: var(--surface); }
+
+.tab.active {
+  color: var(--text);
+  background: var(--surface);
+}
+
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+}
+
+/* ─────────────────────────────────────────
+   MAIN LAYOUT
+   ───────────────────────────────────────── */
+main {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 24px;
+  min-height: calc(100vh - var(--header-h) - var(--tab-h));
+}
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ─────────────────────────────────────────
+   HERO (intro on first tab)
+   ───────────────────────────────────────── */
+.hero {
+  padding: 80px 0 64px;
+  max-width: 880px;
+  border-bottom: 1px solid var(--border);
+}
+
+.hero-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+  margin-bottom: 24px;
+}
+
+.hero h1 {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(48px, 7vw, 88px);
+  line-height: 1.0;
+  letter-spacing: -0.02em;
+  margin-bottom: 32px;
+}
+
+.hero h1 .accent-word {
+  color: var(--accent);
+  font-style: italic;
+}
+
+.hero .lead {
+  font-size: 19px;
+  line-height: 1.55;
+  color: var(--text-soft);
+  max-width: 680px;
+  font-weight: 400;
+}
+
+.hero .lead strong { color: var(--text); font-weight: 600; }
+
+/* ─────────────────────────────────────────
+   EXPLAINER CONTENT
+   ───────────────────────────────────────── */
+.explainer {
+  padding: 64px 0 120px;
+  max-width: 800px;
+}
+
+.explainer-section {
+  margin-bottom: 64px;
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+.explainer-num {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-strong);
+  padding-top: 12px;
+}
+
+.explainer-section h2 {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 36px;
+  line-height: 1.15;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+
+.explainer-section p {
+  color: var(--text-soft);
+  font-size: 16px;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+.explainer-section p strong { color: var(--text); font-weight: 600; }
+
+.explainer-section .pullquote {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 22px;
+  color: var(--accent);
+  border-left: 2px solid var(--accent);
+  padding: 4px 0 4px 20px;
+  margin: 24px 0;
+  line-height: 1.4;
+}
+
+.explainer-section .code-inline {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 2px 6px;
+  color: var(--accent);
+}
+
+/* Anchor mapping table */
+.anchor-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 13px;
+  border: 1px solid var(--border);
+}
+
+.anchor-table th,
+.anchor-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.anchor-table th {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  background: var(--surface);
+  font-weight: 500;
+}
+
+.anchor-table td:first-child { color: var(--text-soft); }
+.anchor-table td:last-child {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent);
+}
+
+/* ─────────────────────────────────────────
+   GENERATOR LAYOUT (split view)
+   ───────────────────────────────────────── */
+.generator {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0;
+  min-height: calc(100vh - var(--header-h) - var(--tab-h));
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+.gen-form {
+  border-right: 1px solid var(--border);
+  padding: 0;
+  overflow-y: visible;
+}
+
+.gen-preview {
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: calc(var(--header-h) + var(--tab-h));
+  height: calc(100vh - var(--header-h) - var(--tab-h));
+}
+
+/* ─────────────────────────────────────────
+   FORM
+   ───────────────────────────────────────── */
+.form-section {
+  border-bottom: 1px solid var(--border);
+}
+
+.form-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  cursor: pointer;
+  background: var(--surface);
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.form-section-header:hover { background: var(--surface-2); }
+
+.form-section-header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.form-section-num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+}
+
+.form-section-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--text);
+}
+
+.form-section-toggle {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+}
+
+.form-section.open .form-section-toggle {
+  transform: rotate(45deg);
+  color: var(--accent);
+}
+
+.form-section-body {
+  padding: 0 24px 32px;
+  display: none;
+}
+
+.form-section.open .form-section-body { display: block; }
+
+/* Subsection with manual/auto toggle */
+.subsection {
+  margin-top: 28px;
+  border-left: 2px solid var(--border);
+  padding-left: 20px;
+  transition: border-color 0.2s;
+}
+
+.subsection.auto {
+  border-left-color: var(--accent);
+}
+
+.subsection-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.subsection-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.subsection-title .arrow {
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 14px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Segmented toggle MANUEL / AUTO */
+.mode-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  height: 26px;
+}
+
+.mode-toggle button {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-weight: 600;
+}
+
+.mode-toggle button:not(:last-child) {
+  border-right: 1px solid var(--border-strong);
+}
+
+.mode-toggle button:hover { color: var(--text); }
+
+.mode-toggle button.active {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.subsection-fields {
+  transition: opacity 0.2s;
+}
+
+.subsection.auto .subsection-fields-manual {
+  display: none;
+}
+
+.subsection-fields-auto-msg {
+  display: none;
+  padding: 14px 16px;
+  background: var(--accent-bg-soft);
+  border-left: 2px solid var(--accent);
+  margin-top: 8px;
+}
+
+.subsection.auto .subsection-fields-auto-msg {
+  display: block;
+}
+
+.subsection-fields-auto-msg p {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.subsection-fields-auto-msg p strong {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.subsection-fields-auto-msg .field {
+  margin-top: 14px;
+}
+
+/* Form fields */
+.field {
+  margin-top: 24px;
+}
+
+.field-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+
+.field-label-text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+}
+
+.field-label-text .req { color: var(--accent); margin-left: 2px; }
+
+.field-hint {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-top: 6px;
+}
+
+.field-input,
+.field-textarea,
+.field-select {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  padding: 10px 12px;
+  border-radius: 0;
+  transition: border-color 0.15s, background 0.15s;
+  font-weight: 400;
+}
+
+.field-input:focus,
+.field-textarea:focus,
+.field-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--surface-3);
+}
+
+.field-input::placeholder,
+.field-textarea::placeholder {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.field-textarea {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.5;
+  font-family: var(--font-ui);
+}
+
+.field-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E8784A' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+/* Color input combo */
+.field-color {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 8px;
+}
+
+.field-color input[type="color"] {
+  width: 60px;
+  height: 40px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 0;
+}
+
+.field-color input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.field-color input[type="color"]::-webkit-color-swatch { border: none; border-radius: 0; }
+
+.field-color input[type="text"] {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+
+/* Two-column field row */
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .field-row { grid-template-columns: 1fr; }
+}
+
+/* Pages dynamic list */
+.pages-list {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.page-item {
+  border: 1px solid var(--border);
+  padding: 16px;
+  background: var(--surface-2);
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.page-item-num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  padding-top: 12px;
+}
+
+.page-item-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.page-item-fields input[type="text"] {
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  padding: 8px 10px;
+  font-weight: 500;
+}
+
+.page-item-fields textarea {
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  padding: 8px 10px;
+  min-height: 60px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.page-item-fields input:focus,
+.page-item-fields textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.page-remove {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  transition: all 0.15s;
+}
+
+.page-remove:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.page-add {
+  background: transparent;
+  border: 1px dashed var(--border-strong);
+  color: var(--text-soft);
+  padding: 12px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 12px;
+  transition: all 0.15s;
+  width: 100%;
+}
+
+.page-add:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ─────────────────────────────────────────
+   PREVIEW PANE
+   ───────────────────────────────────────── */
+.preview-header {
+  height: 56px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.preview-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.preview-title .label { color: var(--text-muted); }
+
+.preview-stats {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.preview-stats span { color: var(--accent); }
+
+.preview-actions {
+  display: flex;
+  gap: 8px;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 9px 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.btn:hover { border-color: var(--text-muted); color: var(--text); }
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hot);
+  border-color: var(--accent-hot);
+  color: var(--bg);
+}
+
+.btn-ghost {
+  border-color: transparent;
+  color: var(--text-muted);
+}
+
+.btn-ghost:hover { color: var(--text); border-color: var(--border); }
+
+.preview-output {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--text-soft);
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--surface);
+}
+
+.preview-output::-webkit-scrollbar { width: 10px; }
+.preview-output::-webkit-scrollbar-track { background: var(--surface); }
+.preview-output::-webkit-scrollbar-thumb { background: var(--border); }
+.preview-output::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+/* Markdown highlighting in preview */
+.md-h1 { color: var(--accent); font-weight: 600; }
+.md-h2 { color: var(--text); font-weight: 600; }
+.md-h3 { color: var(--text); font-weight: 500; }
+.md-bold { color: var(--text); font-weight: 600; }
+.md-italic { color: var(--text); font-style: italic; }
+.md-code { color: var(--accent); }
+.md-comment { color: var(--text-muted); font-style: italic; }
+.md-bullet { color: var(--accent); }
+.md-blockquote { color: var(--accent); font-style: italic; }
+
+/* ─────────────────────────────────────────
+   TOAST
+   ───────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(120%);
+  background: var(--surface-3);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  padding: 14px 24px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  z-index: 1000;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toast .dot {
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  box-shadow: 0 0 12px var(--accent);
+}
+
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ─────────────────────────────────────────
+   RESPONSIVE
+   ───────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .generator { grid-template-columns: 1fr; }
+  .gen-form { border-right: none; border-bottom: 1px solid var(--border); }
+  .gen-preview {
+    position: static;
+    height: 80vh;
+    min-height: 600px;
+  }
+}
+
+@media (max-width: 640px) {
+  .header-meta { display: none; }
+  .tab { padding: 0 16px; font-size: 11px; }
+  .hero { padding: 48px 0 32px; }
+  .hero h1 { font-size: 40px; }
+  .explainer-section { grid-template-columns: 1fr; gap: 16px; }
+  .explainer-num { border-top: none; padding-top: 0; }
+  .explainer-section h2 { font-size: 28px; }
+}
+
+/* ─────────────────────────────────────────
+   FOOTER
+   ───────────────────────────────────────── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 32px 24px;
+  margin-top: 80px;
+  background: var(--surface);
+}
+
+.footer-inner {
+  max-width: var(--container);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.footer-inner a { color: var(--accent); text-decoration: none; }
+.footer-inner a:hover { text-decoration: underline; }
+
+@media (max-width: 640px) {
+  .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     HEADER
+     ═══════════════════════════════════════ -->
+<header>
+  <div class="header-inner">
+    <a href="#" class="brand">
+      <span class="brand-mono">DESIGN.MD</span>
+      <span class="brand-slash">/</span>
+      <span class="brand-serif">Generator</span>
+    </a>
+    <div class="header-meta">
+      <span class="dot"></span>
+      v1.0 — par ludo
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════
+     TABS
+     ═══════════════════════════════════════ -->
+<nav class="tabs">
+  <div class="tabs-inner">
+    <button class="tab active" data-tab="comprendre">
+      <span class="tab-num">01</span>
+      Comprendre
+    </button>
+    <button class="tab" data-tab="generer">
+      <span class="tab-num">02</span>
+      Générer
+    </button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════
+     MAIN
+     ═══════════════════════════════════════ -->
+<main>
+
+  <!-- ─── PANEL: COMPRENDRE ─── -->
+  <div class="tab-panel active" id="panel-comprendre">
+
+    <section class="hero">
+      <div class="hero-eyebrow">Méthode · Prompt design system · Forge</div>
+      <h1>Un design fort <span class="accent-word">n'existe pas</span> par accident.</h1>
+      <p class="lead">
+        Il naît d'une <strong>thèse claire</strong>, d'un <strong>parti pris assumé</strong>, d'une <strong>signature mémorable</strong>. Ce générateur t'aide à produire le prompt qui force Claude (ou tout autre LLM) à respecter ce parti pris jusqu'au bout — au lieu de reproduire les conventions ternes qu'il a vues dans son training.
+      </p>
+    </section>
+
+    <section class="explainer">
+
+      <div class="explainer-section">
+        <div class="explainer-num">01</div>
+        <div>
+          <h2>L'ancrage</h2>
+          <p>Inspire-toi d'un <strong>design system existant</strong> tiré de <span class="code-inline">getdesign.md</span>. Pas par paresse — pour ancrer Claude sur une grammaire visuelle cohérente. Sans ancrage, Claude produit le plus petit dénominateur commun de tout ce qu'il a vu : du SaaS gris avec un gradient violet.</p>
+          <p>Le choix de l'anchor doit matcher l'<strong>univers émotionnel</strong> du projet, pas son secteur d'activité. Un site notaire peut prendre <em>Notion</em> (warm editorial). Un jeu vintage western peut prendre <em>Lamborghini</em> (black + gold dramatique). Un dashboard MTG peut prendre <em>Supabase</em> (vert profond dev tool).</p>
+          <table class="anchor-table">
+            <thead>
+              <tr><th>Univers</th><th>Anchor</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Premium institutionnel + tradition</td><td>Notion · Mastercard</td></tr>
+              <tr><td>Luxe brutaliste noir + accent chaud</td><td>Lamborghini · BMW M</td></tr>
+              <tr><td>Tech premium élégance austère</td><td>Vercel · Stripe · Linear</td></tr>
+              <tr><td>Éditorial dense magazine</td><td>WIRED · The Verge</td></tr>
+              <tr><td>Cinematic dark minimalisme radical</td><td>Tesla · SpaceX · Bugatti</td></tr>
+              <tr><td>Dev tool terminal-native</td><td>Supabase · Raycast</td></tr>
+              <tr><td>Friendly joyeux</td><td>Figma · Zapier · Airtable</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="explainer-section">
+        <div class="explainer-num">02</div>
+        <div>
+          <h2>La différenciation</h2>
+          <p>Liste explicitement les <strong>patterns de la concurrence à NE PAS reproduire</strong>. Sans cette liste, Claude reproduit les conventions par défaut. Pour un site notaire ? Bleu marine + slider hero + poignée de main stock + iconographie balance. C'est mort d'avance.</p>
+          <p class="pullquote">Ce qu'on ne nomme pas comme interdit revient dans le rendu.</p>
+          <p>L'exercice utile : visite 5 sites concurrents, note les 5 patterns visuels les plus saturés, et bannis-les explicitement. C'est l'étape qui transforme un design <em>correct</em> en un design <em>distinctif</em>.</p>
+        </div>
+      </div>
+
+      <div class="explainer-section">
+        <div class="explainer-num">03</div>
+        <div>
+          <h2>La direction créative nommée</h2>
+          <p><em>Phosphor Editorial</em>. <em>Auric Editorial</em>. <em>Gold Wanted</em>. <em>Warm Cookbook</em>. <em>Cathédrale Numérique</em>. Donne un <strong>nom</strong> à ta direction. Deux mots maximum. Un adjectif évocateur + une catégorie.</p>
+          <p>Un nom = une thèse. Une thèse = un cap. Un cap = un design qui ne dévie pas page après page. Sans nom, le brief glisse. Avec un nom, chaque décision se valide ou s'invalide contre lui : « Ce bouton est-il <em>Auric Editorial</em> ? Non → on change. »</p>
+        </div>
+      </div>
+
+      <div class="explainer-section">
+        <div class="explainer-num">04</div>
+        <div>
+          <h2>La signature mémorable</h2>
+          <p>UNE seule idée graphique qui doit <strong>identifier le site au premier coup d'œil</strong>. Les chiffres XXL en mono phosphor de La Guilde Auro. Les lettrines serif sur crème des notaires. Le titre uppercase or massif de Lucky Rush. Le hero serif italique éditorial de Mijoté.</p>
+          <p>Sans signature, le design est un patchwork de bonnes intentions. La signature est ce qu'on retient quand on a fermé l'onglet. C'est aussi ce qui se décline en post LinkedIn, en cover de présentation, en signature email.</p>
+          <p class="pullquote">Si tu peux décrire le site sans mentionner la signature, c'est qu'elle n'existe pas.</p>
+        </div>
+      </div>
+
+      <div class="explainer-section">
+        <div class="explainer-num">05</div>
+        <div>
+          <h2>Les tokens exposés</h2>
+          <p>Demande <strong>explicitement</strong> les CSS variables dans <span class="code-inline">:root</span>. Sinon tu auras du Tailwind utility hardcodé partout, impossible à mapper vers ton <span class="code-inline">tailwind.config.ts</span> de Next.js. Non-négociable pour l'intégration.</p>
+          <p>Le prompt doit imposer la nomenclature : <span class="code-inline">--color-bg</span>, <span class="code-inline">--color-ink</span>, <span class="code-inline">--color-accent</span>, <span class="code-inline">--font-display</span>, <span class="code-inline">--space-section</span>. C'est ce qui transforme un prototype Claude en système réutilisable dans ton repo.</p>
+        </div>
+      </div>
+
+      <div class="explainer-section">
+        <div class="explainer-num">06</div>
+        <div>
+          <h2>La validation amont</h2>
+          <p>Force Claude à <strong>proposer sa direction en 5 lignes AVANT de produire 7 pages</strong>. Couleur d'accent retenue, polices définitives, ton général, première page attaquée, remarque éventuelle. Tu valides, il enchaîne.</p>
+          <p>Cette étape coûte 30 secondes. Elle sauve 30 minutes d'itération sur 7 pages qui partent dans le mauvais sens. C'est le seul vrai garde-fou contre la dérive créative à grande échelle.</p>
+        </div>
+      </div>
+
+      <div class="explainer-section">
+        <div class="explainer-num">07</div>
+        <div>
+          <h2>Le dual mode — manuel ou auto</h2>
+          <p>Toutes les décisions <strong>strictement stratégiques</strong> (nom, audience, objet du monde réel, signature visuelle, crime concurrent) restent <strong>toujours user-driven</strong>. C'est ta thèse, elle n'est pas négociable par Claude.</p>
+          <p>Pour l'exécution — <strong>anchor design system</strong>, polices, palette, mots-clés, catégories d'images — chaque sous-section a un toggle <span class="code-inline">MANUEL / AUTO</span>. En <strong>MANUEL</strong>, tu imposes ton anchor, tes hex codes et tes polices. En <strong>AUTO</strong>, Claude propose 2 options lors du cadrage de 5 lignes, tu valides.</p>
+          <p class="pullquote">Pas exploré les 71 systèmes de getdesign.md ? Bascule l'anchor en AUTO. Pas de hex codes en tête à 16h ? Pareil pour la palette. Tu décides à la validation, pas à la rédaction.</p>
+          <p>Les <strong>contraintes</strong> (couleurs interdites, clichés visuels interdits) restent appliquées dans les deux modes — un garde-fou est un garde-fou, qu'on choisisse ou qu'on délègue.</p>
+        </div>
+      </div>
+
+      <div class="explainer-section">
+        <div class="explainer-num">→</div>
+        <div>
+          <h2>Maintenant, génère.</h2>
+          <p>Passe à l'onglet <strong>Générer</strong>. Le formulaire est segmenté en 4 étapes — la première (Le brief) est la plus importante. Si tu n'arrives pas à remplir les 7 champs essentiels, c'est que ta thèse n'est pas mûre. Reviens y réfléchir avant de coder.</p>
+          <p>Tout est sauvegardé localement dans ton navigateur. Tu peux revenir, modifier, régénérer. Le prompt final se copie en un clic et se colle directement dans une nouvelle conversation Claude.</p>
+        </div>
+      </div>
+
+    </section>
+  </div>
+
+  <!-- ─── PANEL: GÉNÉRER ─── -->
+  <div class="tab-panel" id="panel-generer">
+    <div class="generator">
+
+      <!-- FORM -->
+      <form class="gen-form" id="brief-form" autocomplete="off">
+
+        <!-- SECTION 1: LE BRIEF -->
+        <div class="form-section open">
+          <div class="form-section-header" data-toggle>
+            <div class="form-section-header-left">
+              <span class="form-section-num">ÉTAPE 01</span>
+              <span class="form-section-title">Le brief — l'essentiel</span>
+            </div>
+            <span class="form-section-toggle">+</span>
+          </div>
+          <div class="form-section-body">
+
+            <div class="field">
+              <div class="field-label">
+                <span class="field-label-text">Nom du projet<span class="req">*</span></span>
+              </div>
+              <input type="text" class="field-input" data-field="nom_projet" placeholder="ex : Étude Martel & Associés" />
+            </div>
+
+            <div class="field">
+              <div class="field-label">
+                <span class="field-label-text">Projet en une phrase (12 mots max)<span class="req">*</span></span>
+              </div>
+              <input type="text" class="field-input" data-field="phrase_de_12_mots" placeholder="Un site vitrine pour une étude de notaires qui veut sortir des clichés institutionnels" maxlength="120" />
+              <div class="field-hint">La phrase doit tenir sur Twitter. Si tu n'y arrives pas, ta thèse est trouble.</div>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <div class="field-label">
+                  <span class="field-label-text">Audience cible<span class="req">*</span></span>
+                </div>
+                <input type="text" class="field-input" data-field="audience_cible" placeholder="Particuliers patrimoniaux et entrepreneurs locaux" />
+              </div>
+              <div class="field">
+                <div class="field-label">
+                  <span class="field-label-text">Ce qu'elle valorise<span class="req">*</span></span>
+                </div>
+                <input type="text" class="field-input" data-field="ce_qu_ils_valorisent" placeholder="Sérieux discret, détestent l'institutionnel poussiéreux" />
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="field-label">
+                <span class="field-label-text">Objet du monde réel auquel ça doit ressembler<span class="req">*</span></span>
+              </div>
+              <input type="text" class="field-input" data-field="objet_du_monde_reel_reference" placeholder="Ouvrir un beau livre relié dans une bibliothèque d'hôtel particulier" />
+              <div class="field-hint">L'ancrage le plus important. Pas d'objet de référence = design SaaS générique.</div>
+            </div>
+
+            <div class="field">
+              <div class="field-label">
+                <span class="field-label-text">Nom de la direction créative (2 mots max)<span class="req">*</span></span>
+              </div>
+              <input type="text" class="field-input" data-field="nom_direction_creative" placeholder="ex : Hôtel Particulier · Phosphor Editorial · Gold Wanted" />
+            </div>
+
+            <div class="field">
+              <div class="field-label">
+                <span class="field-label-text">Signature visuelle mémorable<span class="req">*</span></span>
+              </div>
+              <textarea class="field-textarea" data-field="signature_visuelle" placeholder="Lettrines serif géantes sur fond crème mises en regard de photos d'intérieur en lumière naturelle"></textarea>
+              <div class="field-hint">UNE seule idée graphique qui doit identifier le site au premier coup d'œil.</div>
+            </div>
+
+            <div class="subsection" data-subsection="anchor">
+              <div class="subsection-header">
+                <div class="subsection-title">
+                  Anchor design system <span class="arrow">— getdesign.md<span class="req" style="color: var(--accent); margin-left: 4px;">*</span></span>
+                </div>
+                <div class="mode-toggle" data-mode="anchor">
+                  <button type="button" data-mode-value="manuel" class="active">Manuel</button>
+                  <button type="button" data-mode-value="auto">Auto</button>
+                </div>
+              </div>
+              <div class="subsection-fields-manual">
+                <div class="field" style="margin-top: 8px;">
+                  <select class="field-select" data-field="anchor_design_system">
+                    <option value="">— Choisis un anchor —</option>
+                    <optgroup label="Editorial / Warm">
+                      <option value="notion|warm minimalism, serif headings, soft surfaces">Notion — warm minimalism, serif</option>
+                      <option value="claude|warm terracotta accent, clean editorial layout">Claude — warm terracotta, editorial</option>
+                      <option value="mastercard|warm cream canvas, editorial warmth">Mastercard — cream editorial</option>
+                      <option value="starbucks|warm cream canvas, four-tier green system">Starbucks — warm green tiers</option>
+                    </optgroup>
+                    <optgroup label="Luxury / Dramatic Dark">
+                      <option value="lamborghini|true black, gold accents, dramatic uppercase">Lamborghini — black + gold</option>
+                      <option value="bmw-m|pure black canvas, M tricolor stripes">BMW M — black + tricolor</option>
+                      <option value="bugatti|cinema-black, monochrome austerity">Bugatti — cinema black</option>
+                      <option value="ferrari|chiaroscuro editorial, Ferrari Red">Ferrari — chiaroscuro red</option>
+                    </optgroup>
+                    <optgroup label="Tech / Dev Tool">
+                      <option value="vercel|black and white precision, Geist font">Vercel — black/white Geist</option>
+                      <option value="stripe|signature purple gradients, weight-300 elegance">Stripe — purple gradients</option>
+                      <option value="linear.app|ultra-minimal, precise, purple accent">Linear — ultra minimal</option>
+                      <option value="supabase|dark emerald theme, code-first">Supabase — dark emerald</option>
+                      <option value="raycast|sleek dark chrome, gradient accents">Raycast — dark chrome</option>
+                      <option value="cursor|sleek dark interface, gradient accents">Cursor — sleek dark AI</option>
+                    </optgroup>
+                    <optgroup label="Editorial / Magazine">
+                      <option value="wired|paper-white broadsheet, custom serif, ink-blue links">WIRED — broadsheet</option>
+                      <option value="theverge|acid-mint and ultraviolet, Manuka display">The Verge — acid editorial</option>
+                    </optgroup>
+                    <optgroup label="Cinematic / Minimal Radical">
+                      <option value="tesla|radical subtraction, full-viewport photography">Tesla — radical minimal</option>
+                      <option value="apple|premium white space, SF Pro, cinematic">Apple — premium white</option>
+                      <option value="spacex|stark black and white, full-bleed imagery">SpaceX — stark futuristic</option>
+                    </optgroup>
+                    <optgroup label="Friendly / Playful">
+                      <option value="figma|vibrant multi-color, playful yet professional">Figma — playful pro</option>
+                      <option value="zapier|warm orange, illustration-driven">Zapier — warm orange</option>
+                      <option value="airtable|colorful, friendly, structured data">Airtable — colorful structured</option>
+                    </optgroup>
+                    <optgroup label="Bold / Cinematic">
+                      <option value="binance|bold yellow accent on monochrome, trading urgency">Binance — bold yellow</option>
+                      <option value="spotify|vibrant green on dark, bold type">Spotify — vibrant dark</option>
+                      <option value="nike|monochrome UI, massive uppercase, full-bleed photo">Nike — uppercase mono</option>
+                    </optgroup>
+                  </select>
+                  <div class="field-hint">Va sur getdesign.md/design-md pour voir les détails de chaque système.</div>
+                </div>
+              </div>
+              <div class="subsection-fields-auto-msg">
+                <p><strong>Mode AUTO</strong> · Claude proposera 2 anchors design systems pertinents parmi les 71 disponibles sur <a href="https://getdesign.md/design-md" target="_blank" style="color: var(--accent); text-decoration: underline;">getdesign.md</a>, alignés sur la direction créative et l'objet de référence. Justification d'une ligne pour chacun. Tu choisis au cadrage.</p>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="field-label">
+                <span class="field-label-text">Crime esthétique #1 de la concurrence à tuer<span class="req">*</span></span>
+              </div>
+              <input type="text" class="field-input" data-field="crime_esthetique_1" placeholder="Le bleu marine + or institutionnel qui sature 90% des sites du secteur" />
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SECTION 2: LE DESIGN -->
+        <div class="form-section">
+          <div class="form-section-header" data-toggle>
+            <div class="form-section-header-left">
+              <span class="form-section-num">ÉTAPE 02</span>
+              <span class="form-section-title">Le design — tokens & palette</span>
+            </div>
+            <span class="form-section-toggle">+</span>
+          </div>
+          <div class="form-section-body">
+
+            <p style="font-size: 13px; color: var(--text-muted); margin-top: 16px; font-style: italic; line-height: 1.6;">Chaque sous-section a un toggle <strong style="color: var(--text-soft); font-style: normal; font-family: var(--font-mono); font-size: 11px;">MANUEL / AUTO</strong>. En mode AUTO, Claude proposera 2-3 options lors du cadrage de 5 lignes — tu valideras avant production.</p>
+
+            <!-- POLICES -->
+            <div class="subsection" data-subsection="polices">
+              <div class="subsection-header">
+                <div class="subsection-title">
+                  Polices <span class="arrow">— display & body</span>
+                </div>
+                <div class="mode-toggle" data-mode="polices">
+                  <button type="button" data-mode-value="manuel" class="active">Manuel</button>
+                  <button type="button" data-mode-value="auto">Auto</button>
+                </div>
+              </div>
+              <div class="subsection-fields-manual">
+                <div class="field-row">
+                  <div class="field">
+                    <div class="field-label">
+                      <span class="field-label-text">Police de titrage</span>
+                    </div>
+                    <input type="text" class="field-input" data-field="police_titrage" placeholder="ex : Fraunces, Instrument Serif, Tiempos" />
+                  </div>
+                  <div class="field">
+                    <div class="field-label">
+                      <span class="field-label-text">Police de corps</span>
+                    </div>
+                    <input type="text" class="field-input" data-field="police_corps" placeholder="ex : Inter, Geist, Söhne" />
+                  </div>
+                </div>
+              </div>
+              <div class="subsection-fields-auto-msg">
+                <p><strong>Mode AUTO</strong> · Claude proposera un duo display serif + body sans-serif aligné sur la direction créative et l'anchor design system. Tu valideras les fallbacks avant production.</p>
+              </div>
+            </div>
+
+            <!-- PALETTE -->
+            <div class="subsection" data-subsection="palette">
+              <div class="subsection-header">
+                <div class="subsection-title">
+                  Palette <span class="arrow">— accent + neutres</span>
+                </div>
+                <div class="mode-toggle" data-mode="palette">
+                  <button type="button" data-mode-value="manuel" class="active">Manuel</button>
+                  <button type="button" data-mode-value="auto">Auto</button>
+                </div>
+              </div>
+              <div class="subsection-fields-manual">
+                <div class="field">
+                  <div class="field-label">
+                    <span class="field-label-text">Couleur d'accent (UNE seule)</span>
+                  </div>
+                  <div class="field-color">
+                    <input type="color" data-field="hex_accent_picker" value="#1F3A2E" />
+                    <input type="text" class="field-input" data-field="hex_accent" placeholder="#1F3A2E" value="#1F3A2E" />
+                  </div>
+                  <div class="field-hint">Une seule couleur d'accent. Les neutres peuvent varier, l'accent reste UN.</div>
+                </div>
+                <div class="field">
+                  <div class="field-label">
+                    <span class="field-label-text">Nom évocateur de la couleur d'accent</span>
+                  </div>
+                  <input type="text" class="field-input" data-field="nom_couleur_avec_ame" placeholder="ex : Vert forestier sombre · Bordeaux profond · Or champagne" />
+                </div>
+                <div class="field-row">
+                  <div class="field">
+                    <div class="field-label">
+                      <span class="field-label-text">Fond principal</span>
+                    </div>
+                    <div class="field-color">
+                      <input type="color" data-field="hex_fond_principal_picker" value="#FBFAF6" />
+                      <input type="text" class="field-input" data-field="hex_fond_principal" placeholder="#FBFAF6" value="#FBFAF6" />
+                    </div>
+                  </div>
+                  <div class="field">
+                    <div class="field-label">
+                      <span class="field-label-text">Fond secondaire</span>
+                    </div>
+                    <div class="field-color">
+                      <input type="color" data-field="hex_fond_secondaire_picker" value="#F0EBE0" />
+                      <input type="text" class="field-input" data-field="hex_fond_secondaire" placeholder="#F0EBE0" value="#F0EBE0" />
+                    </div>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field">
+                    <div class="field-label">
+                      <span class="field-label-text">Texte principal</span>
+                    </div>
+                    <div class="field-color">
+                      <input type="color" data-field="hex_texte_principal_picker" value="#1E2329" />
+                      <input type="text" class="field-input" data-field="hex_texte_principal" placeholder="#1E2329" value="#1E2329" />
+                    </div>
+                  </div>
+                  <div class="field">
+                    <div class="field-label">
+                      <span class="field-label-text">Bordures filaires</span>
+                    </div>
+                    <div class="field-color">
+                      <input type="color" data-field="hex_bordure_picker" value="#E5DFD2" />
+                      <input type="text" class="field-input" data-field="hex_bordure" placeholder="#E5DFD2" value="#E5DFD2" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="subsection-fields-auto-msg">
+                <p><strong>Mode AUTO</strong> · Claude proposera 2-3 palettes complètes (fond + surface secondaire + accent unique + texte + bordures) cohérentes avec la direction créative et l'anchor. Tu valideras avant production.</p>
+              </div>
+              <!-- Couleurs interdites : toujours visible, en contrainte -->
+              <div class="field">
+                <div class="field-label">
+                  <span class="field-label-text">⛔ Couleurs explicitement interdites</span>
+                </div>
+                <input type="text" class="field-input" data-field="couleurs_interdites" placeholder="ex : pas de bleu marine, pas de gradient violet, pas de néon" />
+                <div class="field-hint">Contrainte appliquée même en mode AUTO.</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SECTION 3: LE CONTENU -->
+        <div class="form-section">
+          <div class="form-section-header" data-toggle>
+            <div class="form-section-header-left">
+              <span class="form-section-num">ÉTAPE 03</span>
+              <span class="form-section-title">Le contenu — pages & images</span>
+            </div>
+            <span class="form-section-toggle">+</span>
+          </div>
+          <div class="form-section-body">
+
+            <div class="field">
+              <div class="field-label">
+                <span class="field-label-text">Stack technique</span>
+              </div>
+              <input type="text" class="field-input" data-field="stack" placeholder="Next.js App Router + TypeScript + Tailwind" value="Next.js App Router + TypeScript + Tailwind" />
+            </div>
+
+            <div class="field">
+              <div class="field-label">
+                <span class="field-label-text">Pages à concevoir<span class="req">*</span></span>
+              </div>
+              <div class="field-hint">5 à 7 pages max pour un premier passage. Plus = perte de cohérence.</div>
+              <div class="pages-list" id="pages-list"></div>
+              <button type="button" class="page-add" id="add-page">+ Ajouter une page</button>
+            </div>
+
+            <!-- MOTS-CLÉS -->
+            <div class="subsection" data-subsection="motscles">
+              <div class="subsection-header">
+                <div class="subsection-title">
+                  Mots-clés artistiques <span class="arrow">— direction</span>
+                </div>
+                <div class="mode-toggle" data-mode="motscles">
+                  <button type="button" data-mode-value="manuel" class="active">Manuel</button>
+                  <button type="button" data-mode-value="auto">Auto</button>
+                </div>
+              </div>
+              <div class="subsection-fields-manual">
+                <div class="field">
+                  <div class="field-label">
+                    <span class="field-label-text">Mots-clés (5 à 8)</span>
+                  </div>
+                  <input type="text" class="field-input" data-field="mots_cles" placeholder="éditorial · épuré · confiance silencieuse · tradition vivante · lumière du jour" />
+                  <div class="field-hint">Séparés par · ou virgules. Évite "moderne / élégant / professionnel" — trop creux.</div>
+                </div>
+              </div>
+              <div class="subsection-fields-auto-msg">
+                <p><strong>Mode AUTO</strong> · Claude proposera 5 à 8 mots-clés dérivés de la direction créative et de l'objet de référence. Précis et évocateurs, pas creux.</p>
+              </div>
+            </div>
+
+            <!-- IMAGES -->
+            <div class="subsection" data-subsection="images">
+              <div class="subsection-header">
+                <div class="subsection-title">
+                  Images <span class="arrow">— catégories & traitement</span>
+                </div>
+                <div class="mode-toggle" data-mode="images">
+                  <button type="button" data-mode-value="manuel" class="active">Manuel</button>
+                  <button type="button" data-mode-value="auto">Auto</button>
+                </div>
+              </div>
+              <div class="subsection-fields-manual">
+                <div class="field">
+                  <div class="field-label">
+                    <span class="field-label-text">Catégories d'images à utiliser</span>
+                  </div>
+                  <textarea class="field-textarea" data-field="categories_images" placeholder="Architecture intérieure haut de gamme : hôtels particuliers, bibliothèques, escaliers en pierre&#10;Détails matières : papier épais, encre, sceau, livres reliés, marbre&#10;Lumière naturelle traversante : fenêtres hautes, contre-jour doux&#10;Portraits éditoriaux : demi-portrait lumière naturelle, environnement de l'étude"></textarea>
+                  <div class="field-hint">Une catégorie par ligne. Sois précis : pas "photos de qualité" mais des sujets concrets.</div>
+                </div>
+                <div class="field">
+                  <div class="field-label">
+                    <span class="field-label-text">Traitement photo</span>
+                  </div>
+                  <input type="text" class="field-input" data-field="traitement_photo" placeholder="ex : noir et blanc, sépia chaud, désaturé naturel" />
+                </div>
+              </div>
+              <div class="subsection-fields-auto-msg">
+                <p><strong>Mode AUTO</strong> · Claude proposera 4 catégories d'images Unsplash cohérentes avec l'objet de référence, et un traitement chromatique unifié. Aucune utilisée sans justification.</p>
+              </div>
+              <!-- Clichés interdits : toujours visible, en contrainte -->
+              <div class="field">
+                <div class="field-label">
+                  <span class="field-label-text">⛔ Clichés visuels interdits</span>
+                </div>
+                <input type="text" class="field-input" data-field="cliches_interdits" placeholder="poignée de main, balance, marteau de juge, anneau" />
+                <div class="field-hint">Contrainte appliquée même en mode AUTO.</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SECTION 4: HORS-SCOPE -->
+        <div class="form-section">
+          <div class="form-section-header" data-toggle>
+            <div class="form-section-header-left">
+              <span class="form-section-num">ÉTAPE 04</span>
+              <span class="form-section-title">Les garde-fous — hors-scope</span>
+            </div>
+            <span class="form-section-toggle">+</span>
+          </div>
+          <div class="form-section-body">
+
+            <div class="field">
+              <div class="field-label">
+                <span class="field-label-text">Patterns interdits (un par ligne)</span>
+              </div>
+              <textarea class="field-textarea" data-field="anti_patterns" placeholder="Slider / carousel hero&#10;Carousel de témoignages avec étoiles&#10;Compteurs animés '+30 ans d'expérience'&#10;Icônes line cliché en bleu&#10;Gradient violet ou bleu&#10;Dark mode forcé&#10;Chatbot popup intrusif">Slider / carousel hero
+Carousel de témoignages avec étoiles
+Compteurs animés type "+X années d'expérience"
+Gradient violet ou multicolore
+Dark mode forcé
+Chatbot popup intrusif</textarea>
+            </div>
+
+            <div class="field">
+              <div class="field-label">
+                <span class="field-label-text">Première page à attaquer</span>
+              </div>
+              <input type="text" class="field-input" data-field="page_de_depart" placeholder="ex : la page d'accueil" value="la page d'accueil" />
+            </div>
+
+          </div>
+        </div>
+
+      </form>
+
+      <!-- PREVIEW -->
+      <aside class="gen-preview">
+        <div class="preview-header">
+          <div class="preview-title">
+            <span class="label">OUTPUT</span>
+            <span class="serif" style="font-size:18px;">le prompt généré</span>
+          </div>
+          <div class="preview-stats">
+            <span id="char-count">0</span> chars · <span id="line-count">0</span> lignes
+          </div>
+        </div>
+        <div class="preview-actions">
+          <button class="btn btn-primary" id="copy-btn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="0"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copier le prompt
+          </button>
+          <button class="btn" id="download-btn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            .md
+          </button>
+          <button class="btn btn-ghost" id="reset-btn">Réinitialiser</button>
+        </div>
+        <div class="preview-output" id="preview-output"></div>
+      </aside>
+
+    </div>
+  </div>
+
+</main>
+
+<!-- ═══════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════ -->
+<footer>
+  <div class="footer-inner">
+    <div>DESIGN.MD / Generator · Sauvegarde locale auto · Aucun tracker</div>
+    <div>→ <a href="https://getdesign.md" target="_blank" rel="noopener">getdesign.md</a></div>
+  </div>
+</footer>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span class="dot"></span><span id="toast-msg">Copié dans le presse-papier</span></div>
+
+<script>
+/* ─────────────────────────────────────────
+   STATE & STORAGE
+   ───────────────────────────────────────── */
+const STORAGE_KEY = 'design-md-generator-v1';
+
+const defaultPages = [
+  { name: 'Accueil', sections: 'Hero éditorial, présentation rapide, domaines/services, preuve sociale, CTA contact' },
+  { name: 'À propos', sections: 'Histoire, valeurs, équipe ou philosophie, photos des lieux' },
+  { name: 'Services / Expertise', sections: 'Liste éditoriale (pas grille d\'icônes) avec sous-pages' },
+  { name: 'Contact', sections: 'Adresse, plan stylisé, formulaire sobre, horaires, prise de RDV' }
+];
+
+let state = {
+  nom_projet: '',
+  phrase_de_12_mots: '',
+  audience_cible: '',
+  ce_qu_ils_valorisent: '',
+  objet_du_monde_reel_reference: '',
+  nom_direction_creative: '',
+  signature_visuelle: '',
+  anchor_design_system: '',
+  crime_esthetique_1: '',
+  police_titrage: '',
+  police_corps: '',
+  hex_accent: '#1F3A2E',
+  nom_couleur_avec_ame: '',
+  hex_fond_principal: '#FBFAF6',
+  hex_fond_secondaire: '#F0EBE0',
+  hex_texte_principal: '#1E2329',
+  hex_bordure: '#E5DFD2',
+  couleurs_interdites: '',
+  stack: 'Next.js App Router + TypeScript + Tailwind',
+  mots_cles: '',
+  categories_images: '',
+  traitement_photo: '',
+  cliches_interdits: '',
+  anti_patterns: 'Slider / carousel hero\nCarousel de témoignages avec étoiles\nCompteurs animés type "+X années d\'expérience"\nGradient violet ou multicolore\nDark mode forcé\nChatbot popup intrusif',
+  page_de_depart: 'la page d\'accueil',
+  pages: [...defaultPages],
+  // Mode toggles per subsection
+  auto_anchor: false,
+  auto_polices: false,
+  auto_palette: false,
+  auto_motscles: false,
+  auto_images: false
+};
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      state = { ...state, ...parsed };
+      if (!parsed.pages || !parsed.pages.length) state.pages = [...defaultPages];
+    }
+  } catch (e) { console.warn('Could not load state'); }
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch (e) { console.warn('Could not save state'); }
+}
+
+/* ─────────────────────────────────────────
+   TABS
+   ───────────────────────────────────────── */
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === btn));
+    document.querySelectorAll('.tab-panel').forEach(p => {
+      p.classList.toggle('active', p.id === 'panel-' + target);
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+
+/* ─────────────────────────────────────────
+   ACCORDION
+   ───────────────────────────────────────── */
+document.querySelectorAll('[data-toggle]').forEach(header => {
+  header.addEventListener('click', () => {
+    header.parentElement.classList.toggle('open');
+  });
+});
+
+/* ─────────────────────────────────────────
+   MODE TOGGLES (MANUEL / AUTO)
+   ───────────────────────────────────────── */
+function applyModeState(modeKey) {
+  const stateKey = 'auto_' + modeKey;
+  const isAuto = !!state[stateKey];
+  const subsection = document.querySelector(`[data-subsection="${modeKey}"]`);
+  const toggle = document.querySelector(`[data-mode="${modeKey}"]`);
+  if (!subsection || !toggle) return;
+
+  subsection.classList.toggle('auto', isAuto);
+  toggle.querySelectorAll('button').forEach(b => {
+    const isThisAuto = b.dataset.modeValue === 'auto';
+    b.classList.toggle('active', isThisAuto === isAuto);
+  });
+}
+
+function bindModeToggles() {
+  document.querySelectorAll('[data-mode]').forEach(toggle => {
+    const modeKey = toggle.dataset.mode;
+    toggle.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const isAuto = btn.dataset.modeValue === 'auto';
+        state['auto_' + modeKey] = isAuto;
+        applyModeState(modeKey);
+        updatePreview();
+        saveState();
+      });
+    });
+    // Apply initial state from loaded state
+    applyModeState(modeKey);
+  });
+}
+
+/* ─────────────────────────────────────────
+   FORM BINDING
+   ───────────────────────────────────────── */
+function bindFields() {
+  document.querySelectorAll('[data-field]').forEach(el => {
+    const key = el.dataset.field;
+
+    // Special handling for color pickers (sync with text input)
+    if (key.endsWith('_picker')) {
+      const textKey = key.replace('_picker', '');
+      el.value = state[textKey] || el.value;
+      el.addEventListener('input', () => {
+        state[textKey] = el.value.toUpperCase();
+        const textInput = document.querySelector(`[data-field="${textKey}"]`);
+        if (textInput) textInput.value = state[textKey];
+        updatePreview();
+        saveState();
+      });
+      return;
+    }
+
+    // Sync text → picker for color fields
+    if (key.startsWith('hex_')) {
+      el.value = state[key] || el.value;
+      el.addEventListener('input', () => {
+        state[key] = el.value;
+        const picker = document.querySelector(`[data-field="${key}_picker"]`);
+        if (picker && /^#[0-9A-F]{6}$/i.test(state[key])) picker.value = state[key];
+        updatePreview();
+        saveState();
+      });
+      return;
+    }
+
+    el.value = state[key] || '';
+    el.addEventListener('input', () => {
+      state[key] = el.value;
+      updatePreview();
+      saveState();
+    });
+  });
+}
+
+/* ─────────────────────────────────────────
+   PAGES DYNAMIC LIST
+   ───────────────────────────────────────── */
+function renderPages() {
+  const list = document.getElementById('pages-list');
+  list.innerHTML = '';
+  state.pages.forEach((page, idx) => {
+    const div = document.createElement('div');
+    div.className = 'page-item';
+    div.innerHTML = `
+      <div class="page-item-num">${String(idx + 1).padStart(2, '0')}</div>
+      <div class="page-item-fields">
+        <input type="text" placeholder="Nom de la page" value="${escapeHtml(page.name)}" data-page-idx="${idx}" data-page-field="name" />
+        <textarea placeholder="Sections / contenu de la page (séparés par virgules)" data-page-idx="${idx}" data-page-field="sections">${escapeHtml(page.sections)}</textarea>
+      </div>
+      <button type="button" class="page-remove" data-page-remove="${idx}" aria-label="Supprimer cette page">×</button>
+    `;
+    list.appendChild(div);
+  });
+
+  list.querySelectorAll('[data-page-field]').forEach(el => {
+    el.addEventListener('input', e => {
+      const idx = parseInt(e.target.dataset.pageIdx);
+      const field = e.target.dataset.pageField;
+      state.pages[idx][field] = e.target.value;
+      updatePreview();
+      saveState();
+    });
+  });
+  list.querySelectorAll('[data-page-remove]').forEach(el => {
+    el.addEventListener('click', e => {
+      const idx = parseInt(e.target.dataset.pageRemove);
+      if (state.pages.length > 1) {
+        state.pages.splice(idx, 1);
+        renderPages();
+        updatePreview();
+        saveState();
+      } else {
+        showToast('Garde au moins une page', 'warn');
+      }
+    });
+  });
+}
+
+document.getElementById('add-page').addEventListener('click', () => {
+  state.pages.push({ name: '', sections: '' });
+  renderPages();
+  saveState();
+  // Focus on new input
+  const inputs = document.querySelectorAll('[data-page-field="name"]');
+  if (inputs.length) inputs[inputs.length - 1].focus();
+});
+
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[c]);
+}
+
+/* ─────────────────────────────────────────
+   PROMPT GENERATION
+   ───────────────────────────────────────── */
+function generatePrompt() {
+  const s = state;
+  const anchor = s.anchor_design_system ? s.anchor_design_system.split('|') : ['', ''];
+  const anchorSlug = anchor[0] || 'notion';
+  const anchorDesc = anchor[1] || 'warm minimalism, serif headings, soft surfaces';
+  const anchorName = anchorSlug.charAt(0).toUpperCase() + anchorSlug.slice(1).replace(/-/g, ' ').replace(/\./g, '.');
+
+  // ─── Anchor reference block (auto vs manual) ───
+  let anchorBlock;
+  if (s.auto_anchor) {
+    anchorBlock = `**Anchor design system** — *À PROPOSER (mode AUTO)*
+
+Choisis **2 anchors design systems** parmi les 71 disponibles sur https://getdesign.md/design-md qui collent à la direction créative et à l'objet de référence. Format URL d'un anchor : \`https://getdesign.md/{slug}/design-md\`
+
+Pour chaque anchor proposé, donne :
+- son slug et son nom
+- une ligne de justification rapportée à l'univers du projet
+- le token signature qu'on garderait (couleur d'accent / typo / pattern de layout)
+
+Présente-les lors du cadrage. Caractéristiques à reprendre une fois validé : tokens couleur, typographie, espacements, composants.`;
+  } else {
+    anchorBlock = `**Anchor design system** : inspire-toi de **${anchorName}** documenté ici : https://getdesign.md/${anchorSlug}/design-md
+
+Caractéristiques clés à reprendre (${anchorDesc}) :`;
+  }
+
+  const adjectifsCles = s.auto_motscles
+    ? 'singulier et soigné'
+    : (s.mots_cles || 'éditorial, épuré, soigné')
+        .split(/[·,]/).map(w => w.trim()).filter(Boolean).slice(0, 4).join(', ');
+
+  const antiPatternsList = (s.anti_patterns || '').split('\n').filter(Boolean)
+    .map(p => '- ❌ ' + p.trim()).join('\n');
+
+  const pagesList = s.pages.map((p, i) => {
+    const sections = (p.sections || '').split(/[,\n]/).map(x => x.trim()).filter(Boolean);
+    let block = `${i + 1}. **${p.name || 'Page ' + (i + 1)}**`;
+    if (sections.length) block += '\n   ' + sections.map(sec => '- ' + sec).join('\n   ');
+    return block;
+  }).join('\n\n');
+
+  // ─── Typography block (auto vs manual) ───
+  let typoBlock;
+  if (s.auto_polices) {
+    typoBlock = `- **Typographie** — *À PROPOSER (mode AUTO)*
+  - Propose un **duo de polices** aligné sur l'anchor design system et la direction créative
+  - Display : une serif éditoriale OU une sans-serif à fort caractère
+  - Body : une sans-serif soignée et lisible (Google Fonts gratuites privilégiées)
+  - Présente 2 options de duo lors du cadrage`;
+  } else {
+    typoBlock = `- **Typographie**
+  - Titrage : ${s.police_titrage || 'Fraunces, Instrument Serif ou Tiempos'}
+  - Corps : ${s.police_corps || 'Inter, Geist ou Söhne'}
+  - Hiérarchie forte : H1 très grand (clamp 56px → 96px), H2 contrastés, lead paragraph distinct`;
+  }
+
+  // ─── Palette block (auto vs manual) ───
+  let paletteBlock;
+  if (s.auto_palette) {
+    const anchorRef = s.auto_anchor
+      ? "l'anchor design system que tu auras proposé"
+      : `l'anchor (${anchorDesc})`;
+    paletteBlock = `- **Palette complète** — *À PROPOSER (mode AUTO)*
+  - Propose **2 palettes complètes** lors du cadrage, alignées sur ${anchorRef} et la direction créative
+  - Chaque palette contient : 1 fond principal, 1 surface secondaire, 1 couleur de texte principale, 1 bordure filaire, **UN SEUL accent** avec un nom évocateur
+  - ⛔ **À bannir absolument** : ${s.couleurs_interdites || 'gradients violets, couleurs néon, bleu corporate cliché'}
+  - Justifie chaque palette en une ligne (rapport à l'objet de référence)`;
+  } else {
+    paletteBlock = `- **Surfaces**
+  - Fond principal : \`${s.hex_fond_principal}\`
+  - Surface secondaire : \`${s.hex_fond_secondaire}\`
+  - Bordures filaires 1px : \`${s.hex_bordure}\`
+  - Ombres très douces, jamais lourdes
+
+- **Palette**
+  - Texte : \`${s.hex_texte_principal}\`
+  - **UN SEUL accent** : \`${s.hex_accent}\` (${s.nom_couleur_avec_ame || 'couleur signature'})
+  - À bannir : ${s.couleurs_interdites || 'gradients violets, couleurs néon, bleu corporate cliché'}`;
+  }
+
+  // ─── Mots-clés block ───
+  let motsClesBlock;
+  if (s.auto_motscles) {
+    motsClesBlock = `*À PROPOSER (mode AUTO)* — dérive 5 à 8 mots-clés évocateurs de la direction créative et de l'objet de référence. Évite "moderne / élégant / professionnel" — trop creux. Présente-les lors du cadrage.`;
+  } else {
+    motsClesBlock = (s.mots_cles || 'éditorial · épuré · confiance silencieuse · tradition vivante · lumière du jour')
+      .split(/[·,]/).map(w => w.trim()).filter(Boolean)
+      .map(w => '`' + w + '`').join(' · ');
+  }
+
+  // ─── Images block ───
+  let imagesBlock;
+  if (s.auto_images) {
+    imagesBlock = `*À PROPOSER (mode AUTO)* — propose 4 catégories d'images Unsplash cohérentes avec l'objet de référence et la direction créative. Pour chaque catégorie : nom + description précise des sujets (pas "photos qualitatives" mais des sujets concrets type "détails de matières : papier épais, encre, sceau").
+
+Propose aussi un **traitement chromatique unifié** (noir et blanc / sépia chaud / désaturé / saturé naturel) pour la cohérence visuelle.
+
+Présente le tout lors du cadrage.`;
+  } else {
+    const categoriesList = (s.categories_images || 'Architecture intérieure haut de gamme : hôtels particuliers, bibliothèques\nDétails matières : papier, encre, sceau, livres reliés\nLumière naturelle traversante : fenêtres hautes, contre-jour\nPortraits éditoriaux : demi-portrait lumière naturelle')
+      .split('\n').filter(Boolean)
+      .map(c => '- **' + c.split(':')[0].trim() + '**' + (c.includes(':') ? ' :' + c.split(':').slice(1).join(':') : '')).join('\n');
+    imagesBlock = categoriesList + `\n\nTraitement photo : ${s.traitement_photo || 'cohérence chromatique sur l\'ensemble du site, lumière naturelle privilégiée'}.`;
+  }
+
+  // ─── CSS :root block ───
+  let cssTokens;
+  if (s.auto_palette && s.auto_polices) {
+    cssTokens = `:root {
+  /* Couleurs — À DÉFINIR après validation de la palette proposée */
+  --color-bg: [fond principal];
+  --color-bg-soft: [surface secondaire];
+  --color-ink: [texte principal];
+  --color-ink-soft: [variation 60% du texte];
+  --color-accent: [accent unique];
+  --color-rule: [bordure filaire];
+
+  /* Typo — À DÉFINIR après validation du duo proposé */
+  --font-display: [display], Georgia, serif;
+  --font-body: [body], system-ui, sans-serif;
+
+  /* Espacements */
+  --space-section: clamp(96px, 12vw, 160px);
+  --space-block: clamp(48px, 6vw, 80px);
+
+  /* Mise en page */
+  --container-max: 1200px;
+  --measure: 65ch;
+}`;
+  } else {
+    const bg = s.auto_palette ? '[à définir]' : s.hex_fond_principal;
+    const bgSoft = s.auto_palette ? '[à définir]' : s.hex_fond_secondaire;
+    const ink = s.auto_palette ? '[à définir]' : s.hex_texte_principal;
+    const accent = s.auto_palette ? '[à définir]' : s.hex_accent;
+    const rule = s.auto_palette ? '[à définir]' : s.hex_bordure;
+    const display = s.auto_polices ? '[à définir]' : (s.police_titrage || 'Fraunces');
+    const body = s.auto_polices ? '[à définir]' : (s.police_corps || 'Inter');
+    cssTokens = `:root {
+  /* Couleurs */
+  --color-bg: ${bg};
+  --color-bg-soft: ${bgSoft};
+  --color-ink: ${ink};
+  --color-ink-soft: [variation 60% du texte];
+  --color-accent: ${accent};
+  --color-rule: ${rule};
+
+  /* Typo */
+  --font-display: '${display}', Georgia, serif;
+  --font-body: '${body}', system-ui, sans-serif;
+
+  /* Espacements */
+  --space-section: clamp(96px, 12vw, 160px);
+  --space-block: clamp(48px, 6vw, 80px);
+
+  /* Mise en page */
+  --container-max: 1200px;
+  --measure: 65ch;
+}`;
+  }
+
+  // ─── Méthode de travail (adapt to auto modes) ───
+  const methodSteps = [];
+  if (s.auto_anchor) {
+    methodSteps.push("**Anchor design system** — présente 2 options de https://getdesign.md/design-md avec slug + nom + justification d'une ligne + token signature à garder");
+  }
+  if (s.auto_palette) {
+    methodSteps.push("**Palette retenue** — présente 2 options complètes (fond + surface + accent + texte + bordure), justifie chacune en une ligne");
+  } else {
+    methodSteps.push("**Confirmation de la palette** — confirme l'accent retenu et son rapport à la direction créative en une ligne");
+  }
+  if (s.auto_polices) {
+    methodSteps.push("**Duo typographique** — présente 2 options (display + body), justifie en une ligne");
+  } else {
+    methodSteps.push("**Confirmation du duo typographique** — confirme les polices avec fallbacks");
+  }
+  if (s.auto_motscles) {
+    methodSteps.push("**Mots-clés artistiques** — propose 5 à 8 mots évocateurs dérivés de la direction");
+  }
+  if (s.auto_images) {
+    methodSteps.push("**Catégories d'images** — propose 4 catégories + traitement chromatique unifié");
+  }
+  methodSteps.push("**Ton général** en une phrase");
+  methodSteps.push("**Première page** que tu vas attaquer");
+  methodSteps.push("**Remarque éventuelle** sur un point du brief qui mérite d'être affiné");
+
+  const methodList = methodSteps.map((step, i) => `${i + 1}. ${step}`).join('\n');
+
+  return `# Brief design — ${s.nom_projet || 'Nom du projet'}
+
+## Contexte
+
+${s.phrase_de_12_mots || '[Phrase d\'introduction du projet en 12 mots max]'}. Le projet vise **${s.audience_cible || '[audience cible]'}** qui valorisent ${s.ce_qu_ils_valorisent || '[ce qu\'ils valorisent]'}.
+
+Tech stack final : ${s.stack}.
+Tu produis ici les **maquettes HTML/CSS hautes-fidélité** qui serviront de référence à l'intégration.
+
+## Objectif
+
+Se démarquer franchement de la concurrence par un design ${adjectifsCles}. Pas de template générique. Le site doit donner l'impression de **${s.objet_du_monde_reel_reference || '[objet du monde réel]'}**.
+
+## Analyse de la concurrence — patterns à NE PAS reproduire
+
+Le secteur est saturé de patterns datés. À éviter absolument :
+
+- **${s.crime_esthetique_1 || '[Crime esthétique principal]'}**
+- Photographies stock cliché et imagerie corporate froide
+- Hero avec slider et empilement de CTA
+- Iconographie line cliché du secteur
+- Hiérarchie typographique molle, tout en sans-serif medium
+- Layouts symétriques sans rythme éditorial
+
+L'objectif : produire un site qui, posé à côté de 10 sites concurrents, se distingue **immédiatement** comme plus singulier.
+
+## Direction créative — "${s.nom_direction_creative || '[Nom de la direction]'}"
+
+> *${s.objet_du_monde_reel_reference ? 'L\'esprit d\'un(e) ' + s.objet_du_monde_reel_reference.toLowerCase() + ', traduit en interface web.' : '[Punchline évocatrice]'}*
+
+${anchorBlock}
+
+${typoBlock}
+
+${paletteBlock}
+
+- **Espacements**
+  - Padding vertical de section : clamp(96px, 12vw, 160px)
+  - Conteneur max : 1200px sur desktop, gouttière généreuse
+  - Beaucoup de respiration
+
+- **Composants**
+  - Boutons rectangulaires, coins très légèrement arrondis (4-6px max) ou pleins angles droits
+  - Liens texte avec underline custom (offset 4px, épaisseur 1px)
+  - Cards sans ombre, juste bordure 1px
+  - Séparateurs filaires fins
+
+## Signature visuelle mémorable
+
+**${s.nom_direction_creative || '[Nom]'} signature** : ${s.signature_visuelle || '[Description de la signature visuelle unique du site]'}
+
+C'est l'élément qui, vu une fois, doit identifier le site. Décline-la sur au moins 3 pages.
+
+## Pages à concevoir
+
+${pagesList}
+
+## Direction artistique — mots-clés
+
+${motsClesBlock}
+
+## Images — OBLIGATOIRE
+
+Le design doit comporter des **images réelles** (urls Unsplash valides), pas de placeholders gris ni de divs colorées. C'est un critère central : sans images, le design ne tient pas.
+
+${imagesBlock}
+
+Sources : Unsplash (urls \`https://images.unsplash.com/...\` directes) ou Pexels.
+
+**Aucun cliché** : pas de ${s.cliches_interdits || 'poignée de main, balance, marteau de juge, anneau, icône maison'}.
+
+## Livrables techniques
+
+Un fichier \`.html\` par page (ou SPA en sections clairement délimitées). Pour chaque page :
+
+- HTML sémantique (\`<header>\`, \`<main>\`, \`<section>\`, \`<article>\`, \`<nav>\`, \`<footer>\`)
+- CSS : Tailwind CDN OK pour le prototype, MAIS expose impérativement les **design tokens en variables CSS** dans \`:root\` :
+
+\`\`\`css
+${cssTokens}
+\`\`\`
+
+- Responsive mobile / tablette / desktop (référence 1440px)
+- Composants identifiables et nommés (Hero, Card, TeamMember, Footer, etc.)
+- Microanimations subtiles (200-400ms, easing naturel, jamais flashy)
+- **Accessibilité RGAA AA minimum** : contrastes vérifiés, focus visibles, alt sur toutes les images, navigation clavier opérationnelle, structure de titres cohérente
+
+## Hors-scope (ne PAS produire)
+
+${antiPatternsList}
+
+## Méthode de travail
+
+**Avant de coder quoi que ce soit**, propose-moi le cadrage complet ci-dessous :
+
+${methodList}
+
+Je valide ce cadrage, puis tu enchaînes les pages.
+
+Démarre par **${s.page_de_depart || 'la page d\'accueil'}** une fois mon GO reçu.
+`;
+}
+
+/* ─────────────────────────────────────────
+   PREVIEW RENDER (with subtle markdown highlighting)
+   ───────────────────────────────────────── */
+function highlightMarkdown(text) {
+  const esc = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return esc(text)
+    .replace(/^(#{1})\s+(.*)$/gm, '<span class="md-h1">$1 $2</span>')
+    .replace(/^(#{2})\s+(.*)$/gm, '<span class="md-h2">$1 $2</span>')
+    .replace(/^(#{3})\s+(.*)$/gm, '<span class="md-h3">$1 $2</span>')
+    .replace(/`([^`]+)`/g, '<span class="md-code">`$1`</span>')
+    .replace(/\*\*([^*]+)\*\*/g, '<span class="md-bold">**$1**</span>')
+    .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<span class="md-italic">*$1*</span>')
+    .replace(/^&gt;\s+(.*)$/gm, '<span class="md-blockquote">&gt; $1</span>')
+    .replace(/^(\s*)-\s+(.*)$/gm, '$1<span class="md-bullet">-</span> $2');
+}
+
+function updatePreview() {
+  const prompt = generatePrompt();
+  document.getElementById('preview-output').innerHTML = highlightMarkdown(prompt);
+  document.getElementById('char-count').textContent = prompt.length.toLocaleString('fr-FR');
+  document.getElementById('line-count').textContent = prompt.split('\n').length.toLocaleString('fr-FR');
+}
+
+/* ─────────────────────────────────────────
+   ACTIONS
+   ───────────────────────────────────────── */
+function showToast(msg, type = 'ok') {
+  const toast = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => toast.classList.remove('show'), 2400);
+}
+
+document.getElementById('copy-btn').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(generatePrompt());
+    showToast('Copié dans le presse-papier');
+  } catch (e) {
+    showToast('Erreur de copie');
+  }
+});
+
+document.getElementById('download-btn').addEventListener('click', () => {
+  const blob = new Blob([generatePrompt()], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const slug = (state.nom_projet || 'design-prompt').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  a.href = url;
+  a.download = `prompt-${slug || 'brief'}.md`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Fichier .md téléchargé');
+});
+
+document.getElementById('reset-btn').addEventListener('click', () => {
+  if (!confirm('Réinitialiser toutes les valeurs ? Le brouillon sera perdu.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+});
+
+/* ─────────────────────────────────────────
+   INIT
+   ───────────────────────────────────────── */
+loadState();
+bindFields();
+bindModeToggles();
+renderPages();
+updatePreview();
+</script>
+
+</body>
+</html>
